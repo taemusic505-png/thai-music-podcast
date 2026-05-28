@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&family=Sarabun:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Sarabun", "Kanit", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Kanit", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: #020617; /* bg-slate-950 */
+    overflow-x: hidden;
+  }
+  
+  /* Sleek Scrollbar customization so it matches the dark Spotify-inspired design */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(212, 175, 55, 0.4); /* Gold color hover */
+  }
+}
+
+/* Scroll animation smooths */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
