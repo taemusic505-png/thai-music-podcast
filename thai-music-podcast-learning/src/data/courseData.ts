@@ -10,6 +10,7 @@ export const episodesData: Episode[] = [
     objective: 'ศ 2.2 ม.1/1 อธิบายบทบาทความสัมพันธ์และอิทธิพลของดนตรีที่มีต่อสังคมไทย',
     colorGrad: 'from-amber-950 via-slate-900 to-black',
     thumbnail: '🏺',
+    audioUrl: '/audio/ep1.mp3',
     learningPoints: [
       'อิทธิพลความเชื่อดั้งเดิมและลัทธิพราหมณ์-ฮินดูสู่เครื่องดนตรีศักดิ์สิทธิ์',
       'วิวัฒนาการดนตรีในแต่ละยุคสมัย: สุโขทัย อยุธยา และรัตนโกสินทร์',
@@ -123,6 +124,7 @@ export const episodesData: Episode[] = [
     objective: 'ศ 2.1 ม.1/2 เปรียบเทียบเสียงร้องและเสียงของเครื่องดนตรีที่มาจากวัฒนธรรมที่ต่างกัน',
     colorGrad: 'from-blue-950 via-slate-900 to-black',
     thumbnail: '🎼',
+    audioUrl: '/audio/ep2.mp3',
     learningPoints: [
       'ความถี่และระบบโครงสร้าง "๗ เสียงเต็มห่างเท่ากัน" (7 Diatonic equal temperament)',
       'ความแตกต่างระหว่างท่วงทำนองขับร้อง (Melody) และทำนองบรรเลงของเครื่องดนตรี',
@@ -219,6 +221,7 @@ export const episodesData: Episode[] = [
     objective: 'ศ 2.1 ม.1/1 อ่าน เขียน ร้องโน้ตไทย และโน้ตสากล',
     colorGrad: 'from-rose-950 via-slate-900 to-black',
     thumbnail: '🎼',
+    audioUrl: '/audio/ep3.mp3',
     learningPoints: [
       'เข้าใจตารางห้องโน้ตดนตรีไทย (ในหนึ่งบรรทัดมี ๘ ห้อง ห้องละ ๔ ตัวโน้ต)',
       'การใช้สัญลักษณ์แทนระดับเสียง ด ร ม ฟ ซ ล ท',

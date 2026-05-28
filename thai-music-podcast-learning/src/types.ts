@@ -31,6 +31,7 @@ export interface Episode {
   learningPoints: string[];
   thumbnail: string;
   colorGrad: string; // tailwind gradient classes
+  audioUrl?: string; // Path to MP3 file for AI voice
   transcript: TranscriptLine[];
   quizzes: QuizQuestion[];
   games: InteractiveGameTrigger[];

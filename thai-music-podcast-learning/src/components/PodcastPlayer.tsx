@@ -33,125 +33,71 @@ export default function PodcastPlayer({
   const [activeGameTrigger, setActiveGameTrigger] = useState<InteractiveGameTrigger | null>(null);
   const [solvedGameTimes, setSolvedGameTimes] = useState<number[]>([]);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
-  const [lastSpokenLineIndex, setLastSpokenLineIndex] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const activeLineIndex = episode.transcript.findIndex((line, idx) => {
     return currentTime >= line.time && (idx === episode.transcript.length - 1 || currentTime < episode.transcript[idx + 1].time);
   });
 
-  // Pre-process text to make Thai AI speak much more naturally
-  const preprocessTTS = (text: string) => {
-    return text
-      .replace(/นร\./g, 'นักเรียน')
-      .replace(/ม\.1/g, 'มอหนึ่ง')
-      .replace(/ร\.7/g, 'รัชกาลที่ 7')
-      .replace(/ดนตรี-นาฏศิลป์/g, 'ดนตรีและนาฏศิลป์')
-      .replace(/Thai Music Podcast/gi, 'ไทย มิวสิค พอดแคสต์')
-      .replace(/EP1:/g, 'อีพีหนึ่ง')
-      .replace(/EP2:/g, 'อีพีสอง')
-      .replace(/EP3:/g, 'อีพีสาม')
-      .replace(/๗ เสียง/g, 'เจ็ดเสียง')
-      .replace(/๘ ห้อง/g, 'แปดห้อง')
-      .replace(/๔ ตัว/g, 'สี่ตัว')
-      .replace(/๓ ชั้น/g, 'สามชั้น')
-      .replace(/๒ ชั้น/g, 'สองชั้น')
-      .replace(/ด - โด, ร - เร, ม - มี, ฟ - ฟา, ซ - ซอล, ล - ลา, ท - ที/g, 'ดอ โด, รอ เร, มอ มี, ฟอ ฟา, ซอ ซอล, ลอ ลา, ทอ ที')
-      // Break sentences to allow AI to breathe naturally
-      .replace(/!/g, ' ')
-      .replace(/\?/g, ' ')
-      .replace(/"/g, ' ');
-  };
-
-  // Handle Speech Synthesis
-  useEffect(() => {
-    if (!('speechSynthesis' in window)) return;
-
-    // Pause or stop if not playing
-    if (!isPlaying || activeGameTrigger) {
-      window.speechSynthesis.cancel();
-      setLastSpokenLineIndex(null);
-      return;
-    }
-
-    // Speak the new active line
-    if (activeLineIndex !== -1 && activeLineIndex !== lastSpokenLineIndex) {
-      window.speechSynthesis.cancel(); // Stop current speech
-      
-      const line = episode.transcript[activeLineIndex];
-      const naturalText = preprocessTTS(line.text);
-      
-      const utterance = new SpeechSynthesisUtterance(naturalText);
-      utterance.lang = 'th-TH';
-      utterance.rate = Math.max(0.5, Math.min(2.0, playbackSpeed));
-      
-      if (line.speaker === 'ครูเอก') {
-        utterance.pitch = 0.95; // Slightly lower, natural adult male
-      } else {
-        utterance.pitch = 1.15; // Slightly higher, natural young female
-      }
-
-      // Ensure Thai voice if available (Prefer Google Thai if exists, else default)
-      const voices = window.speechSynthesis.getVoices();
-      const googleThai = voices.find(v => v.name.includes('Google') && v.lang.includes('th'));
-      const anyThai = voices.find(v => v.lang.includes('th'));
-      if (googleThai) {
-        utterance.voice = googleThai;
-      } else if (anyThai) {
-        utterance.voice = anyThai;
-      }
-
-      window.speechSynthesis.speak(utterance);
-      setLastSpokenLineIndex(activeLineIndex);
-    }
-  }, [activeLineIndex, isPlaying, episode, lastSpokenLineIndex, playbackSpeed, activeGameTrigger]);
-
-  // Clean up TTS when unmounting or changing episode
-  useEffect(() => {
-    return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, [episode.id]);
-
+  // Reset states when changing episode
   useEffect(() => {
     setActiveGameTrigger(null);
     setSolvedGameTimes([]);
-    setLastSpokenLineIndex(null);
   }, [episode.id]);
 
-  // Core Simulation clock ticking
+  // Handle Play/Pause
   useEffect(() => {
-    let interval: any = null;
-    if (isPlaying && !activeGameTrigger) {
-      interval = setInterval(() => {
-        const nextTime = Math.min(episode.durationSeconds, currentTime + playbackSpeed);
-        
-        // Check for interactive activities triggers
-        const triggerGame = episode.games.find(
-          game => currentTime <= game.time && nextTime >= game.time && !solvedGameTimes.includes(game.time)
-        );
-
-        if (triggerGame) {
-          onSetCurrentTime(triggerGame.time);
-          onSetIsPlaying(false); // Pause audio
-          setActiveGameTrigger(triggerGame);
-          return;
-        }
-
-        onSetCurrentTime(nextTime);
-
-        // Check if finished
-        if (nextTime >= episode.durationSeconds) {
-          onSetIsPlaying(false);
-          onSetCurrentTime(episode.durationSeconds);
-          onCompleteEpisode(episode.id);
-        }
-
-      }, 1000);
+    if (audioRef.current) {
+      if (isPlaying && !activeGameTrigger) {
+        audioRef.current.play().catch(e => console.log('Audio play error:', e));
+      } else {
+        audioRef.current.pause();
+      }
     }
-    return () => clearInterval(interval);
-  }, [isPlaying, currentTime, playbackSpeed, activeGameTrigger, episode, solvedGameTimes]);
+  }, [isPlaying, activeGameTrigger]);
+
+  // Handle Playback Speed
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = playbackSpeed;
+    }
+  }, [playbackSpeed]);
+
+  // Handle manual seeking from external state updates
+  useEffect(() => {
+    if (audioRef.current) {
+      // Only seek audio element if the gap is larger than 1.5s to avoid fighting with onTimeUpdate
+      if (Math.abs(audioRef.current.currentTime - currentTime) > 1.5) {
+        audioRef.current.currentTime = currentTime;
+      }
+    }
+  }, [currentTime]);
+
+  const handleTimeUpdate = () => {
+    if (!audioRef.current) return;
+    
+    const audioTime = audioRef.current.currentTime;
+    onSetCurrentTime(audioTime);
+
+    if (activeGameTrigger) return;
+
+    // Check for interactive activities triggers
+    const triggerGame = episode.games.find(
+      game => audioTime >= game.time && audioTime < game.time + 1.5 && !solvedGameTimes.includes(game.time)
+    );
+
+    if (triggerGame) {
+      onSetCurrentTime(triggerGame.time);
+      onSetIsPlaying(false); // Pause audio
+      setActiveGameTrigger(triggerGame);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    onSetIsPlaying(false);
+    onSetCurrentTime(episode.durationSeconds);
+    onCompleteEpisode(episode.id);
+  };
 
   // Handle active game completion
   const handleGameComplete = (xpEarned: number) => {
@@ -220,6 +166,17 @@ export default function PodcastPlayer({
 
   return (
     <div className="w-full max-w-4xl mx-auto p-4 sm:p-6 text-slate-100 font-sans pb-24 space-y-8 select-none">
+      
+      {/* Hidden Audio Element */}
+      {episode.audioUrl && (
+        <audio 
+          ref={audioRef} 
+          src={episode.audioUrl} 
+          onTimeUpdate={handleTimeUpdate}
+          onEnded={handleAudioEnded}
+          preload="auto"
+        />
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         
