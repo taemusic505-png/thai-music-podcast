@@ -39,6 +39,29 @@ export default function PodcastPlayer({
     return currentTime >= line.time && (idx === episode.transcript.length - 1 || currentTime < episode.transcript[idx + 1].time);
   });
 
+  // Pre-process text to make Thai AI speak much more naturally
+  const preprocessTTS = (text: string) => {
+    return text
+      .replace(/นร\./g, 'นักเรียน')
+      .replace(/ม\.1/g, 'มอหนึ่ง')
+      .replace(/ร\.7/g, 'รัชกาลที่ 7')
+      .replace(/ดนตรี-นาฏศิลป์/g, 'ดนตรีและนาฏศิลป์')
+      .replace(/Thai Music Podcast/gi, 'ไทย มิวสิค พอดแคสต์')
+      .replace(/EP1:/g, 'อีพีหนึ่ง')
+      .replace(/EP2:/g, 'อีพีสอง')
+      .replace(/EP3:/g, 'อีพีสาม')
+      .replace(/๗ เสียง/g, 'เจ็ดเสียง')
+      .replace(/๘ ห้อง/g, 'แปดห้อง')
+      .replace(/๔ ตัว/g, 'สี่ตัว')
+      .replace(/๓ ชั้น/g, 'สามชั้น')
+      .replace(/๒ ชั้น/g, 'สองชั้น')
+      .replace(/ด - โด, ร - เร, ม - มี, ฟ - ฟา, ซ - ซอล, ล - ลา, ท - ที/g, 'ดอ โด, รอ เร, มอ มี, ฟอ ฟา, ซอ ซอล, ลอ ลา, ทอ ที')
+      // Break sentences to allow AI to breathe naturally
+      .replace(/!/g, ' ')
+      .replace(/\?/g, ' ')
+      .replace(/"/g, ' ');
+  };
+
   // Handle Speech Synthesis
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
@@ -55,21 +78,26 @@ export default function PodcastPlayer({
       window.speechSynthesis.cancel(); // Stop current speech
       
       const line = episode.transcript[activeLineIndex];
-      const utterance = new SpeechSynthesisUtterance(line.text);
+      const naturalText = preprocessTTS(line.text);
+      
+      const utterance = new SpeechSynthesisUtterance(naturalText);
       utterance.lang = 'th-TH';
       utterance.rate = Math.max(0.5, Math.min(2.0, playbackSpeed));
       
       if (line.speaker === 'ครูเอก') {
-        utterance.pitch = 0.8; // Lower pitch for Kru Aek
+        utterance.pitch = 0.95; // Slightly lower, natural adult male
       } else {
-        utterance.pitch = 1.4; // Higher pitch for student Mali
+        utterance.pitch = 1.15; // Slightly higher, natural young female
       }
 
-      // Ensure Thai voice if available
+      // Ensure Thai voice if available (Prefer Google Thai if exists, else default)
       const voices = window.speechSynthesis.getVoices();
-      const thaiVoice = voices.find(v => v.lang.includes('th'));
-      if (thaiVoice) {
-        utterance.voice = thaiVoice;
+      const googleThai = voices.find(v => v.name.includes('Google') && v.lang.includes('th'));
+      const anyThai = voices.find(v => v.lang.includes('th'));
+      if (googleThai) {
+        utterance.voice = googleThai;
+      } else if (anyThai) {
+        utterance.voice = anyThai;
       }
 
       window.speechSynthesis.speak(utterance);
