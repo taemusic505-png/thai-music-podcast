@@ -609,6 +609,17 @@ export default function App() {
           </AnimatePresence>
 
         </div>
+
+        {/* FOOTER */}
+        <footer className="w-full max-w-6xl mx-auto px-4 py-8 mt-12 mb-20 md:mb-8 border-t border-white/[0.05] text-center select-none">
+          <p className="text-zinc-400 text-sm mb-2 font-medium">
+            พัฒนาโดย <span className="text-amber-400 font-bold">ครูวีรวัฒน์ วัฒนปัญโญ</span> ครูโรงเรียนบ้านปากยาง
+          </p>
+          <p className="text-zinc-500 text-xs max-w-2xl mx-auto leading-relaxed">
+            หมายเหตุ: ข้อมูลที่แสดงเป็นเพียงตัวอย่างการพัฒนานวัตกรรมที่สามารถนำไปประยุกต์ใช้งานได้จริง หากมีความผิดพลาดประการใดขออภัยมา ณ ที่นี้ ทางผู้จัดทำจะปรับปรุงพัฒนาคุณภาพให้ดียิ่งขึ้นอย่างต่อเนื่อง
+          </p>
+        </footer>
+
       </main>
 
       {/* MOBILE BOTTOM NAVIGATION BAR (Hidden on desktop) */}
