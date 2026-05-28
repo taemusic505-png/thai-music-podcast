@@ -33,10 +33,63 @@ export default function PodcastPlayer({
   const [activeGameTrigger, setActiveGameTrigger] = useState<InteractiveGameTrigger | null>(null);
   const [solvedGameTimes, setSolvedGameTimes] = useState<number[]>([]);
   const transcriptContainerRef = useRef<HTMLDivElement>(null);
+  const [lastSpokenLineIndex, setLastSpokenLineIndex] = useState<number | null>(null);
+
+  const activeLineIndex = episode.transcript.findIndex((line, idx) => {
+    return currentTime >= line.time && (idx === episode.transcript.length - 1 || currentTime < episode.transcript[idx + 1].time);
+  });
+
+  // Handle Speech Synthesis
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return;
+
+    // Pause or stop if not playing
+    if (!isPlaying || activeGameTrigger) {
+      window.speechSynthesis.cancel();
+      setLastSpokenLineIndex(null);
+      return;
+    }
+
+    // Speak the new active line
+    if (activeLineIndex !== -1 && activeLineIndex !== lastSpokenLineIndex) {
+      window.speechSynthesis.cancel(); // Stop current speech
+      
+      const line = episode.transcript[activeLineIndex];
+      const utterance = new SpeechSynthesisUtterance(line.text);
+      utterance.lang = 'th-TH';
+      utterance.rate = Math.max(0.5, Math.min(2.0, playbackSpeed));
+      
+      if (line.speaker === 'ครูเอก') {
+        utterance.pitch = 0.8; // Lower pitch for Kru Aek
+      } else {
+        utterance.pitch = 1.4; // Higher pitch for student Mali
+      }
+
+      // Ensure Thai voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const thaiVoice = voices.find(v => v.lang.includes('th'));
+      if (thaiVoice) {
+        utterance.voice = thaiVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+      setLastSpokenLineIndex(activeLineIndex);
+    }
+  }, [activeLineIndex, isPlaying, episode, lastSpokenLineIndex, playbackSpeed, activeGameTrigger]);
+
+  // Clean up TTS when unmounting or changing episode
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [episode.id]);
 
   useEffect(() => {
     setActiveGameTrigger(null);
     setSolvedGameTimes([]);
+    setLastSpokenLineIndex(null);
   }, [episode.id]);
 
   // Core Simulation clock ticking
